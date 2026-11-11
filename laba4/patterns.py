@@ -1,165 +1,170 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 
-class SortingStrategy(ABC):
+class DeliveryStrategy(ABC):
 
     @abstractmethod
-    def sort(self, array: list) -> None:
+    def calculate_cost(self, weight: float) -> float:
         pass
 
+class CourierDeliveryStrategy(DeliveryStrategy):
 
+    def calculate_cost(self, weight: float) -> float:
+        print("Расчет доставки курьером (фиксированная ставка + за вес)")
+        return 300.0 + (weight * 50.0)
 
-class BubbleSortStrategy(SortingStrategy):
+class PickupPointDeliveryStrategy(DeliveryStrategy):
 
-    def sort(self, array: list) -> None:
-        print("Sorting using Bubble Sort")
-        
+    def calculate_cost(self, weight: float) -> float:
+        print("Расчет доставки в пункт выдачи (дешевле)")
+        return 150.0 + (weight * 20.0)
 
-
-class QuickSortStrategy(SortingStrategy):
-
-    def sort(self, array: list) -> None:
-        print("Sorting using Quick Sort")
-        
-
-
-class Sorter:
+class OrderCalculator:
 
     def __init__(self):
         self.__strategy = None
 
-    def set_strategy(self, strategy: SortingStrategy) -> None:
+    def set_strategy(self, strategy: DeliveryStrategy) -> None:
         self.__strategy = strategy
 
-    def sort_array(self, array: list) -> None:
+    def calculate(self, weight: float) -> float:
         if self.__strategy:
-            self.__strategy.sort(array)
+            return self.__strategy.calculate_cost(weight)
+        raise ValueError("Стратегия доставки не выбрана!")
 
 
 
 
 
-class RequestType(Enum):
-    TYPE_A = 1
-    TYPE_B = 2
+class CommentType(Enum):
+    PROFANITY = 1  # Мат / грубость
+    SPAM = 2  # Реклама / спам
+    CLEAN = 3  # Обычный хороший комментарий
 
+class Comment:
 
+    def __init__(self, text: str, comment_type: CommentType):
+        self.__text = text
+        self.__type = comment_type
 
-class Request:
-
-    def __init__(self, req_type: RequestType):
-        self.__type = req_type
-
-    def get_type(self) -> RequestType:
+    def get_type(self) -> CommentType:
         return self.__type
 
+    def get_text(self) -> str:
+        return self.__text
 
-
-class Handler(ABC):
+class CommentHandler(ABC):
 
     @abstractmethod
-    def handle_request(self, request: Request) -> None:
+    def process_comment(self, comment: Comment) -> None:
         pass
 
     @abstractmethod
-    def set_next_handler(self, next_handler: "Handler") -> None:
+    def set_next_handler(self, next_handler: "CommentHandler") -> None:
         pass
 
-
-
-class ConcreteHandlerA(Handler):
+class ProfanityFilterHandler(CommentHandler):
 
     def __init__(self):
         self.__next_handler = None
 
-    def set_next_handler(self, next_handler: Handler) -> None:
+    def set_next_handler(self, next_handler: CommentHandler) -> None:
         self.__next_handler = next_handler
 
-    def handle_request(self, request: Request) -> None:
-        if request.get_type() == RequestType.TYPE_A:
-            print("ConcreteHandlerA handled the request.")
+    def process_comment(self, comment: Comment) -> None:
+        if comment.get_type() == CommentType.PROFANITY:
+            print(
+                f"[Фильтр мата]: Комментарий заблокирован ('{comment.get_text()[:15]}...')"
+            )
         elif self.__next_handler is not None:
-            self.__next_handler.handle_request(request)
+            self.__next_handler.process_comment(comment)
 
-
-
-class ConcreteHandlerB(Handler):
+class SpamFilterHandler(CommentHandler):
 
     def __init__(self):
         self.__next_handler = None
 
-    def set_next_handler(self, next_handler: Handler) -> None:
+    def set_next_handler(self, next_handler: CommentHandler) -> None:
         self.__next_handler = next_handler
 
-    def handle_request(self, request: Request) -> None:
-        if request.get_type() == RequestType.TYPE_B:
-            print("ConcreteHandlerB handled the request.")
+    def process_comment(self, comment: Comment) -> None:
+        if comment.get_type() == CommentType.SPAM:
+            print(
+                f"[Фильтр спама]: Реклама отклонена ('{comment.get_text()[:15]}...')"
+            )
         elif self.__next_handler is not None:
-            self.__next_handler.handle_request(request)
+            self.__next_handler.process_comment(comment)
+        else:
+            print(
+                f"[Модерация]: Комментарий успешно опубликован! ('{comment.get_text()}')"
+            )
 
 
 
 
 
-class Iterator(ABC):
+class PlaylistIterator(ABC):
 
     @abstractmethod
-    def has_next(self) -> bool:
+    def has_more_songs(self) -> bool:
         pass
 
     @abstractmethod
-    def next(self):
+    def get_next_song(self) -> str:
         pass
 
 
+class MusicPlaylistIterator(PlaylistIterator):
 
-class ArrayIterator(Iterator):
+    def __init__(self, songs: list):
+        self.__songs = songs
+        self.__current_index = 0
 
-    def __init__(self, items: list):
-        self.__items = items
-        self.__position = 0
+    def has_more_songs(self) -> bool:
+        return self.__current_index < len(self.__songs)
 
-    def has_next(self) -> bool:
-        return self.__position < len(self.__items)
-
-    def next(self):
-        if self.has_next():
-            item = self.__items[self.__position]
-            self.__position += 1
-            return item
-        raise IndexError("No more elements in collection")
+    def get_next_song(self) -> str:
+        if self.has_more_songs():
+            song = self.__songs[self.__current_index]
+            self.__current_index += 1
+            return song
+        raise IndexError("Плейлист закончился")
 
 
 
 
 
 if __name__ == "__main__":
-    print("--- 1. STRATEGY ---")
-    sorter = Sorter()
+    print("--- 1. STRATEGY (Калькулятор доставки) ---")
+    calculator = OrderCalculator()
 
-    sorter.set_strategy(BubbleSortStrategy())
-    array1 = [5, 3, 8, 4, 2]
-    sorter.sort_array(array1)
+    calculator.set_strategy(CourierDeliveryStrategy())
+    cost1 = calculator.calculate(4.5)  # Вес 4.5 кг
+    print(f"Итоговая стоимость: {cost1} руб.\n")
 
-    sorter.set_strategy(QuickSortStrategy())
-    array2 = [5, 3, 8, 4, 2]
-    sorter.sort_array(array2)
+    calculator.set_strategy(PickupPointDeliveryStrategy())
+    cost2 = calculator.calculate(4.5)
+    print(f"Итоговая стоимость: {cost2} руб.\n")
 
-    print("\n--- 2. RESPONSIBILITY CHAIN ---")
-    handler_a = ConcreteHandlerA()
-    handler_b = ConcreteHandlerB()
+    print("--- 2. RESPONSIBILITY CHAIN (Модерация комментариев) ---")
+    filter_profanity = ProfanityFilterHandler()
+    filter_spam = SpamFilterHandler()
 
-    handler_a.set_next_handler(handler_b)
+    # Выстраиваем цепочку: сначала проверка на мат, потом на спам
+    filter_profanity.set_next_handler(filter_spam)
 
-    req_a = Request(RequestType.TYPE_A)
-    req_b = Request(RequestType.TYPE_B)
+    c1 = Comment("Ужасный сервис, вы все...", CommentType.PROFANITY)
+    c2 = Comment("Купите криптовалюту со скидкой!", CommentType.SPAM)
+    c3 = Comment("Отличный материал, спасибо за статью!", CommentType.CLEAN)
 
-    handler_a.handle_request(req_a)   
-    handler_a.handle_request(req_b)  
+    filter_profanity.process_comment(c1)  # Заблокирует фильтр мата
+    filter_profanity.process_comment(c2)  # Заблокирует фильтр спама
+    filter_profanity.process_comment(c3)  # Пройдет оба и опубликуется
 
-    print("\n--- 3. ITERATOR ---")
-    my_items = ["Яблоко", "Банан", "Апельсин"]
-    iterator = ArrayIterator(my_items)
+    print("\n--- 3. ITERATOR (Музыкальный плейлист) ---")
+    my_playlist = ["Трек №1: Rock Anthem", "Трек №2: Jazz Chill", "Трек №3: Pop Hit"]
+    player_iterator = MusicPlaylistIterator(my_playlist)
 
-    while iterator.has_next():
-        print(f"Элемент коллекции: {iterator.next()}")
+    print("Воспроизведение плейлиста:")
+    while player_iterator.has_more_songs():
+        print(f"Сейчас играет -> {player_iterator.get_next_song()}")
