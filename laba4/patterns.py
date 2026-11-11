@@ -37,9 +37,9 @@ class OrderCalculator:
 
 
 class CommentType(Enum):
-    PROFANITY = 1  # Мат / грубость
-    SPAM = 2  # Реклама / спам
-    CLEAN = 3  # Обычный хороший комментарий
+    PROFANITY = 1  
+    SPAM = 2  
+    CLEAN = 3  
 
 class Comment:
 
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     calculator = OrderCalculator()
 
     calculator.set_strategy(CourierDeliveryStrategy())
-    cost1 = calculator.calculate(4.5)  # Вес 4.5 кг
+    cost1 = calculator.calculate(4.5) 
     print(f"Итоговая стоимость: {cost1} руб.\n")
 
     calculator.set_strategy(PickupPointDeliveryStrategy())
@@ -150,16 +150,15 @@ if __name__ == "__main__":
     filter_profanity = ProfanityFilterHandler()
     filter_spam = SpamFilterHandler()
 
-    # Выстраиваем цепочку: сначала проверка на мат, потом на спам
     filter_profanity.set_next_handler(filter_spam)
 
     c1 = Comment("Ужасный сервис, вы все...", CommentType.PROFANITY)
     c2 = Comment("Купите криптовалюту со скидкой!", CommentType.SPAM)
     c3 = Comment("Отличный материал, спасибо за статью!", CommentType.CLEAN)
 
-    filter_profanity.process_comment(c1)  # Заблокирует фильтр мата
-    filter_profanity.process_comment(c2)  # Заблокирует фильтр спама
-    filter_profanity.process_comment(c3)  # Пройдет оба и опубликуется
+    filter_profanity.process_comment(c1)  
+    filter_profanity.process_comment(c2)  
+    filter_profanity.process_comment(c3)  
 
     print("\n--- 3. ITERATOR (Музыкальный плейлист) ---")
     my_playlist = ["Трек №1: Rock Anthem", "Трек №2: Jazz Chill", "Трек №3: Pop Hit"]
